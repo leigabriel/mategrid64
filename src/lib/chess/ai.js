@@ -1,12 +1,7 @@
-import { generateFEN } from "./fen.js";
+import { getBestMove } from "./engine.js";
 import { getLegalMoveDetails, indexToAlgebraic } from "./game.js";
 
-const promotionCodes = {
-  queen: "q",
-  rook: "r",
-  bishop: "b",
-  knight: "n",
-};
+const promotionCodes = { queen: "q", rook: "r", bishop: "b", knight: "n" };
 
 export function getLegalUCIMoves(game) {
   const moves = [];
@@ -23,26 +18,30 @@ export function getLegalUCIMoves(game) {
   return moves;
 }
 
-export async function requestGeminiMove(game, difficulty, signal) {
-  const legalMoves = getLegalUCIMoves(game);
-  if (legalMoves.length === 0) throw new Error("No legal AI moves are available.");
+const THINK_DELAY = { easy: 1200, medium: 2500, hard: 4000 };
 
-  const response = await fetch("/api/ai-move", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      fen: generateFEN(game),
-      legalMoves,
-      difficulty,
-    }),
-    signal,
+export function requestGeminiMove(game, difficulty, signal) {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(Object.assign(new DOMException("Aborted", "AbortError"), { name: "AbortError" }));
+      return;
+    }
+    const delay = THINK_DELAY[difficulty] || THINK_DELAY.medium;
+    const timer = setTimeout(() => {
+      try {
+        const move = getBestMove(game, difficulty);
+        if (!move) {
+          reject(new Error("No legal AI moves are available."));
+          return;
+        }
+        resolve(move);
+      } catch (error) {
+        reject(error);
+      }
+    }, delay);
+    signal?.addEventListener("abort", () => {
+      clearTimeout(timer);
+      reject(Object.assign(new DOMException("Aborted", "AbortError"), { name: "AbortError" }));
+    });
   });
-  const result = await response.json().catch(() => ({}));
-  if (!response.ok || typeof result.move !== "string") {
-    throw new Error(result.error || "AI move request failed.");
-  }
-  if (!legalMoves.includes(result.move)) {
-    throw new Error("AI returned an invalid move.");
-  }
-  return result.move;
 }

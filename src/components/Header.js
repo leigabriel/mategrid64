@@ -4,6 +4,7 @@ import GameStatus from "@/components/GameStatus";
 import MoveHistory from "@/components/MoveHistory";
 
 export default function Header({
+  headerRef,
   game,
   aiStatus,
   difficulty,
@@ -15,7 +16,10 @@ export default function Header({
   onToggleHistory,
 }) {
   return (
-    <header className="site-header px-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6">
+    <header
+      ref={headerRef}
+      className="site-header px-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6"
+    >
       <div className="relative mx-auto flex w-full max-w-8xl items-center justify-between gap-3">
         <a
           href="#board"
@@ -28,12 +32,12 @@ export default function Header({
           <span className="brand-name">MateGrid64</span>
         </a>
 
-        <nav className="desktop-actions" aria-label="Game actions">
+        <nav className="desktop-actions" aria-label="Game actions" data-intro-controls>
           <button
             type="button"
             className="header-action"
             onClick={onUndo}
-            disabled={!canUndo}
+            disabled={canUndo !== true}
           >
             Undo
           </button>
@@ -48,7 +52,7 @@ export default function Header({
               onChange={(event) => onDifficultyChange(event.target.value)}
             >
               <option value="easy">Easy</option>
-              <option value="medium">Medium</option>
+              <option value="medium">Normal</option>
               <option value="hard">Hard</option>
             </select>
           </label>
@@ -65,6 +69,7 @@ export default function Header({
         <button
           type="button"
           className="history-toggle mobile-menu-toggle"
+          data-intro-controls
           aria-label="Toggle game menu"
           aria-expanded={isHistoryOpen}
           onClick={onToggleHistory}

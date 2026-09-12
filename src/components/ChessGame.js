@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useReducer, useRef, useState } from "react";
+import { gsap } from "gsap";
 
 import ChessBoard from "@/components/ChessBoard";
 import Header from "@/components/Header";
@@ -108,16 +109,22 @@ export default function ChessGame() {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const aiControllerRef = useRef(null);
   const aiRequestRef = useRef(0);
+  const sceneRef = useRef(null);
+  const loadingRef = useRef(null);
+  const headerRef = useRef(null);
+  const boardRef = useRef(null);
 
   useEffect(() => {
     let active = true;
-    let exitTimer;
-    let introTimer;
+    let minimumTimer;
+    let context;
+    let timeline;
     const reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)",
     ).matches;
+    const isMobile = window.matchMedia("(max-width: 639px)").matches;
     const minimumDelay = new Promise((resolve) =>
-      window.setTimeout(resolve, reduceMotion ? 150 : 650),
+      (minimumTimer = window.setTimeout(resolve, 5000)),
     );
     const assets = Promise.all(
       pieceAssets.map(
@@ -134,27 +141,80 @@ export default function ChessGame() {
 
     Promise.all([minimumDelay, assets]).then(() => {
       if (!active) return;
-      setPresentation("exiting");
-      exitTimer = window.setTimeout(() => {
-        if (!active) return;
-        setPresentation(reduceMotion ? "ready" : "intro");
-        if (!reduceMotion) {
-          introTimer = window.setTimeout(() => {
+      if (reduceMotion) {
+        setPresentation("ready");
+        return;
+      }
+
+      setPresentation("intro");
+      const root = sceneRef.current;
+      const loading = loadingRef.current;
+      const header = headerRef.current;
+      const board = boardRef.current;
+      const main = root?.querySelector("main");
+      const squares = board?.querySelectorAll("[data-chess-square]") || [];
+      const blackPieces =
+        board?.querySelectorAll('[data-piece-color="black"]') || [];
+      const whitePieces =
+        board?.querySelectorAll('[data-piece-color="white"]') || [];
+      const controls = root?.querySelectorAll("[data-intro-controls]") || [];
+
+      context = gsap.context(() => {
+        gsap.set(header, { y: -10, opacity: 0 });
+        gsap.set(board, {
+          y: isMobile ? 10 : 20,
+          scale: isMobile ? 1.03 : 1.06,
+          opacity: 0,
+        });
+        gsap.set(squares, { y: isMobile ? 2 : 4, opacity: 0 });
+        gsap.set(blackPieces, { y: isMobile ? -8 : -14, opacity: 0 });
+        gsap.set(whitePieces, { y: isMobile ? 8 : 14, opacity: 0 });
+        gsap.set(controls, { y: 6, opacity: 0 });
+
+        timeline = gsap.timeline({
+          defaults: { ease: "power3.out" },
+          onStart: () => gsap.set(main, { visibility: "visible" }),
+          onComplete: () => {
+            gsap.set([header, board, ...squares, ...blackPieces, ...whitePieces, ...controls], {
+              clearProps: "transform,opacity,visibility",
+            });
             if (active) setPresentation("ready");
-          }, 1300);
-        }
-      }, reduceMotion ? 50 : 180);
+          },
+        });
+        timeline
+          .to(loading, { y: -6, opacity: 0, duration: 0.24 })
+          .to(header, { y: 0, opacity: 1, duration: 0.3 }, 0.1)
+          .to(board, { y: -3, scale: 1, opacity: 1, duration: 0.62 }, 0.16)
+          .to(
+            squares,
+            { y: 0, opacity: 1, duration: 0.18, stagger: 0.008 },
+            0.27,
+          )
+          .to(
+            blackPieces,
+            { y: 0, opacity: 1, duration: 0.25, stagger: 0.018 },
+            0.5,
+          )
+          .to(
+            whitePieces,
+            { y: 0, opacity: 1, duration: 0.25, stagger: 0.018 },
+            0.67,
+          )
+          .to(controls, { y: 0, opacity: 1, duration: 0.22 }, 0.9)
+          .to(board, { y: 0, duration: 0.18 }, 1.08);
+      }, sceneRef);
     });
 
     return () => {
       active = false;
-      window.clearTimeout(exitTimer);
-      window.clearTimeout(introTimer);
+      window.clearTimeout(minimumTimer);
+      timeline?.kill();
+      context?.revert();
     };
   }, []);
 
-  const isLoading = presentation === "loading" || presentation === "exiting";
-  const isIntroActive = presentation === "intro";
+  const isLoading = presentation === "loading";
+  const showLoading = presentation !== "ready";
   const isPresentationReady = presentation === "ready";
   const isAITurn =
     state.game.turn === "black" &&
@@ -239,9 +299,10 @@ export default function ChessGame() {
   }
 
   return (
-    <div className="flex min-h-dvh flex-col bg-white text-[#171713]">
-      {isLoading && <LoadingScreen isExiting={presentation === "exiting"} />}
+    <div ref={sceneRef} className="flex min-h-dvh flex-col bg-white text-[#171713]">
+      {showLoading && <LoadingScreen screenRef={loadingRef} />}
       <Header
+        headerRef={headerRef}
         game={state.game}
         aiStatus={aiStatus}
         difficulty={difficulty}
@@ -261,10 +322,10 @@ export default function ChessGame() {
       >
         <section className="board-width" aria-label="Player versus AI chess game">
           <ChessBoard
+            boardRef={boardRef}
             game={state.game}
             selectedSquare={state.selectedSquare}
             legalMoves={state.legalMoves}
-            isIntroActive={isIntroActive}
             isInputLocked={!canPlayerMove}
             onSelect={(index) => {
               if (canPlayerMove) dispatch({ type: "SELECT", index });
@@ -274,8 +335,8 @@ export default function ChessGame() {
       </main>
 
       <footer className="site-footer px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-6">
-        <span>Lei Gabriel</span>
-        <span>v0.1.0</span>
+        <span>leimxnsquare</span>
+        <span>version 1.0.0</span>
       </footer>
 
       {state.pendingPromotion && (
