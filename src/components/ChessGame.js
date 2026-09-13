@@ -200,7 +200,8 @@ export default function ChessGame() {
   const reduceMotionRef = useRef(false);
   const dialogueTimerRef = useRef(null);
   const hasSpokenRef = useRef({ intro: false, firstCapture: false, firstCheck: false });
-  const placeSoundRef = useRef(null);
+  const audioCtxRef = useRef(null);
+  const placeBufferRef = useRef(null);
 
   const selectedOpponent = opponents.find((o) => o.id === selectedOpponentId) || null;
   const inMatch = step === "match" && selectedOpponent !== null;
@@ -292,15 +293,31 @@ export default function ChessGame() {
   }, []);
 
   useEffect(() => {
-    placeSoundRef.current = new Audio("/sfx/place-sfx.mp3");
-    placeSoundRef.current.volume = 0.5;
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    audioCtxRef.current = ctx;
+    fetch("/sfx/place-sfx.mp3")
+      .then((res) => res.arrayBuffer())
+      .then((buf) => ctx.decodeAudioData(buf))
+      .then((decoded) => {
+        placeBufferRef.current = decoded;
+      })
+      .catch(() => {});
+    return () => {
+      ctx.close().catch(() => {});
+    };
   }, []);
 
   function playPlaceSound() {
-    if (placeSoundRef.current) {
-      placeSoundRef.current.currentTime = 0;
-      placeSoundRef.current.play().catch(() => {});
+    const ctx = audioCtxRef.current;
+    const buffer = placeBufferRef.current;
+    if (!ctx || !buffer) return;
+    if (ctx.state === "suspended") {
+      ctx.resume().catch(() => {});
     }
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+    source.start();
   }
 
   useEffect(() => {
