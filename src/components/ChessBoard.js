@@ -1,16 +1,21 @@
+import { forwardRef } from "react";
 import ChessSquare from "@/components/ChessSquare";
+import ChessPiece from "@/components/ChessPiece";
 
 const files = ["a", "b", "c", "d", "e", "f", "g", "h"];
 const ranks = [8, 7, 6, 5, 4, 3, 2, 1];
 
-export default function ChessBoard({
+const ChessBoard = forwardRef(function ChessBoard({
   game,
   selectedSquare,
   legalMoves,
   isInputLocked,
-  boardRef,
   onSelect,
-}) {
+  animatingFrom = null,
+  animatingTo = null,
+  animationPiece = null,
+  captureSquare = null,
+}, ref) {
   const checkedKing = ["check", "checkmate"].includes(game.status)
     ? game.board.findIndex(
         (piece) => piece?.type === "king" && piece.color === game.turn,
@@ -18,7 +23,7 @@ export default function ChessBoard({
     : -1;
 
   return (
-    <div className="board-coordinate-grid" ref={boardRef} data-board-scene>
+    <div className="board-coordinate-grid" ref={ref} data-board-scene>
       <div className="rank-coordinates" aria-hidden="true">
         {ranks.map((rank) => (
           <span key={rank}>{rank}</span>
@@ -58,10 +63,28 @@ export default function ChessBoard({
                   game.lastMove?.from === index || game.lastMove?.to === index
                 }
                 isCheck={checkedKing === index}
+                isCaptureFlash={captureSquare === index}
+                isAnimatingFrom={animatingFrom === index}
                 onSelect={onSelect}
               />
             );
           })}
+          {animationPiece && (
+            <div
+              className="move-animation-overlay"
+              style={{
+                position: "absolute",
+                width: "12.5%",
+                height: "12.5%",
+                zIndex: 10,
+                display: "grid",
+                placeItems: "center",
+                pointerEvents: "none",
+              }}
+            >
+              <ChessPiece type={animationPiece.type} color={animationPiece.color} />
+            </div>
+          )}
         </div>
       </div>
       <div className="file-coordinates" aria-hidden="true">
@@ -71,4 +94,6 @@ export default function ChessBoard({
       </div>
     </div>
   );
-}
+});
+
+export default ChessBoard;

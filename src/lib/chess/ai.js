@@ -23,7 +23,7 @@ const THINK_DELAY = { easy: 1200, medium: 2500, hard: 4000 };
 export function requestGeminiMove(game, difficulty, signal) {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
-      reject(Object.assign(new DOMException("Aborted", "AbortError"), { name: "AbortError" }));
+      reject(new DOMException("Aborted", "AbortError"));
       return;
     }
     const delay = THINK_DELAY[difficulty] || THINK_DELAY.medium;
@@ -41,7 +41,7 @@ export function requestGeminiMove(game, difficulty, signal) {
     }, delay);
     signal?.addEventListener("abort", () => {
       clearTimeout(timer);
-      reject(Object.assign(new DOMException("Aborted", "AbortError"), { name: "AbortError" }));
+      reject(new DOMException("Aborted", "AbortError"));
     });
   });
 }

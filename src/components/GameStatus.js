@@ -22,11 +22,11 @@ export default function GameStatus({ game, aiStatus }) {
   const terminal = ["checkmate", "stalemate", "draw"].includes(game.status);
   const text =
     aiStatus === "thinking"
-      ? "AI thinking..."
+      ? "Opponent is thinking..."
       : aiStatus === "loading"
-        ? "AI preparing move..."
+        ? "Opponent is preparing move..."
         : aiStatus === "error"
-          ? "AI unavailable."
+          ? "Opponent unavailable."
           : statusText(game);
 
   return (

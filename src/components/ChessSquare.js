@@ -11,6 +11,8 @@ export default function ChessSquare({
   isCapture,
   isLastMove,
   isCheck,
+  isCaptureFlash,
+  isAnimatingFrom,
   onSelect,
 }) {
   const states = [
@@ -19,6 +21,7 @@ export default function ChessSquare({
     isCapture && "is-capture",
     isLastMove && "is-last-move",
     isCheck && "is-check",
+    isCaptureFlash && "is-capture-flash",
   ]
     .filter(Boolean)
     .join(" ");
@@ -31,11 +34,12 @@ export default function ChessSquare({
       type="button"
       className={`chess-square chess-square--${tone} ${states}`}
       data-chess-square
+      data-square={index}
       aria-label={label}
       aria-pressed={isSelected}
       onClick={() => onSelect(index)}
     >
-      {piece && (
+      {piece && !isAnimatingFrom && (
         <span className="piece-holder" data-piece-color={piece.color} aria-hidden="true">
           <ChessPiece type={piece.type} color={piece.color} />
         </span>
