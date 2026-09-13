@@ -6,6 +6,7 @@ import { gsap } from "gsap";
 import ChessBoard from "@/components/ChessBoard";
 import Header from "@/components/Header";
 import PromotionModal from "@/components/PromotionModal";
+import GameOverModal from "@/components/GameOverModal";
 import OpponentSelect from "@/components/opponents/OpponentSelect";
 import PlayerSetup from "@/components/opponents/PlayerSetup";
 import { requestGeminiMove } from "@/lib/chess/ai";
@@ -188,6 +189,7 @@ export default function ChessGame() {
   const [player, setPlayer] = useState({ name: "Player", portrait: null });
   const [hasPlayerProfile, setHasPlayerProfile] = useState(false);
   const [isPlayerSettingsOpen, setIsPlayerSettingsOpen] = useState(false);
+  const [gameResult, setGameResult] = useState(null);
   const [step, setStep] = useState("select");
   const [hasHydrated, setHasHydrated] = useState(false);
   const aiControllerRef = useRef(null);
@@ -503,10 +505,12 @@ export default function ChessGame() {
     if (status === "checkmate") {
       const winner = state.game.winner;
       queueMicrotask(() => speak(winner === "white" ? "win" : "lose"));
+      setGameResult(winner === "white" ? "win" : "lose");
       return;
     }
     if (status === "stalemate" || status === "draw") {
       queueMicrotask(() => speak("draw"));
+      setGameResult("draw");
       return;
     }
 
@@ -594,6 +598,7 @@ export default function ChessGame() {
     dispatch({ type: "RESET" });
     hasSpokenRef.current = { intro: false, firstCapture: false, firstCheck: false };
     setDialogueText(null);
+    setGameResult(null);
     resetDialogueState();
   }
 
@@ -802,6 +807,14 @@ export default function ChessGame() {
         <PromotionModal
           color="white"
           onSelect={(piece) => dispatch({ type: "PROMOTE", piece })}
+        />
+      )}
+
+      {gameResult && (
+        <GameOverModal
+          result={gameResult}
+          opponentName={selectedOpponent?.name || "Opponent"}
+          onNewGame={handleReset}
         />
       )}
 

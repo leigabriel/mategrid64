@@ -345,6 +345,53 @@ textarea {
     height: 84%;
 }
 
+/* Game Over Modal */
+
+.game-over-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    background: rgb(23 23 19 / 55%);
+}
+
+.game-over-dialog {
+    width: min(100%, 22rem);
+    border: 3px solid #171713;
+    background: #fff;
+    padding: 1.5rem 1rem;
+    box-shadow: 4px 4px 0 rgb(0 0 0 / 18%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.game-over-dialog__title {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    text-align: center;
+    margin: 0;
+}
+
+.game-over-dialog__subtitle {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.625rem;
+    color: #77776f;
+    text-align: center;
+    margin: 0;
+}
+
+.game-over-dialog__btn {
+    margin-top: 0.5rem;
+    width: 100%;
+}
+
 .brand-name {
     font-size: 1.25rem;
     font-weight: 700;
@@ -558,6 +605,7 @@ html[data-theme="dark"] body,
 .theme-dark .opponent-confirm__dialogue,
 .theme-dark .promotion-dialog,
 .theme-dark .promotion-choice,
+.theme-dark .game-over-dialog,
 .theme-dark .board-area__dialogue {
     border-color: #f4f4ef;
     background: #171713;
