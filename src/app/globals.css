@@ -315,11 +315,13 @@ textarea {
 .promotion-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 20;
+    z-index: 70;
     display: grid;
     place-items: center;
     padding: 1rem;
     background: rgb(23 23 19 / 55%);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .promotion-dialog {
@@ -350,11 +352,13 @@ textarea {
 .game-over-backdrop {
     position: fixed;
     inset: 0;
-    z-index: 20;
+    z-index: 70;
     display: grid;
     place-items: center;
     padding: 1rem;
     background: rgb(23 23 19 / 55%);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
 
 .game-over-dialog {
@@ -1071,6 +1075,18 @@ html[data-theme="dark"] body,
     .mobile-menu-action {
         border: 2px solid currentcolor;
         padding: 0.65rem 0.75rem;
+    }
+
+    .game-over-backdrop,
+    .promotion-backdrop {
+        align-content: center;
+        padding: 1rem;
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+
+    .game-over-dialog,
+    .promotion-dialog {
+        max-width: calc(100vw - 2rem);
     }
 }
 
