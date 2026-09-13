@@ -198,6 +198,7 @@ export default function ChessGame() {
   const reduceMotionRef = useRef(false);
   const dialogueTimerRef = useRef(null);
   const hasSpokenRef = useRef({ intro: false, firstCapture: false, firstCheck: false });
+  const placeSoundRef = useRef(null);
 
   const selectedOpponent = opponents.find((o) => o.id === selectedOpponentId) || null;
   const inMatch = step === "match" && selectedOpponent !== null;
@@ -289,6 +290,18 @@ export default function ChessGame() {
   }, []);
 
   useEffect(() => {
+    placeSoundRef.current = new Audio("/sfx/place-sfx.mp3");
+    placeSoundRef.current.volume = 0.5;
+  }, []);
+
+  function playPlaceSound() {
+    if (placeSoundRef.current) {
+      placeSoundRef.current.currentTime = 0;
+      placeSoundRef.current.play().catch(() => {});
+    }
+  }
+
+  useEffect(() => {
     if (reduceMotionRef.current || !boardRef.current || !inMatch) return;
     const board = boardRef.current;
     const squares = board.querySelectorAll("[data-chess-square]");
@@ -372,6 +385,7 @@ export default function ChessGame() {
     pendingMoveRef.current = pending;
 
     if (reduceMotionRef.current || !boardRef.current) {
+      playPlaceSound();
       dispatch({ type: "COMMIT_MOVE", ...pending });
       pendingMoveRef.current = null;
       return;
@@ -380,6 +394,7 @@ export default function ChessGame() {
     const fromEl = boardRef.current.querySelector(`[data-square="${pending.from}"]`);
     const toEl = boardRef.current.querySelector(`[data-square="${pending.to}"]`);
     if (!fromEl || !toEl) {
+      playPlaceSound();
       dispatch({ type: "COMMIT_MOVE", ...pending });
       pendingMoveRef.current = null;
       return;
@@ -387,6 +402,7 @@ export default function ChessGame() {
 
     const piece = state.game.board[pending.from];
     if (!piece) {
+      playPlaceSound();
       dispatch({ type: "COMMIT_MOVE", ...pending });
       pendingMoveRef.current = null;
       return;
@@ -394,6 +410,7 @@ export default function ChessGame() {
 
     const boardEl = boardRef.current.querySelector("#board");
     if (!boardEl) {
+      playPlaceSound();
       dispatch({ type: "COMMIT_MOVE", ...pending });
       pendingMoveRef.current = null;
       return;
@@ -431,6 +448,7 @@ export default function ChessGame() {
 
     const overlay = boardRef.current?.querySelector(".move-animation-overlay");
     if (!overlay) {
+      playPlaceSound();
       if (pendingMoveRef.current) {
         dispatch({ type: "COMMIT_MOVE", ...pendingMoveRef.current });
         pendingMoveRef.current = null;
@@ -444,6 +462,7 @@ export default function ChessGame() {
     const tl = gsap.timeline({
       onComplete: () => {
         animationRef.current = null;
+        playPlaceSound();
         if (pendingMoveRef.current) {
           dispatch({ type: "COMMIT_MOVE", ...pendingMoveRef.current });
           pendingMoveRef.current = null;

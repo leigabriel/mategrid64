@@ -1,4 +1,4 @@
-import GameControls from "@/components/GameControls";
+import { useRef, useEffect } from "react";
 import GameStatus from "@/components/GameStatus";
 import MoveHistory from "@/components/MoveHistory";
 
@@ -20,6 +20,43 @@ export default function Header({
   onChangeOpponent,
   onEditPlayer,
 }) {
+  const settingsRef = useRef(null);
+  const hamburgerRef = useRef(null);
+  const historyPanelRef = useRef(null);
+  const historyToggleRef = useRef(null);
+
+  useEffect(() => {
+    if (!isSettingsOpen) return;
+
+    function handleClickOutside(e) {
+      const clickedSettings = settingsRef.current?.contains(e.target);
+      const clickedHamburger = hamburgerRef.current?.contains(e.target);
+
+      if (!clickedSettings && !clickedHamburger) {
+        onToggleSettings();
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isSettingsOpen, onToggleSettings]);
+
+  useEffect(() => {
+    if (!isHistoryOpen) return;
+
+    function handleClickOutside(e) {
+      const clickedPanel = historyPanelRef.current?.contains(e.target);
+      const clickedToggle = historyToggleRef.current?.contains(e.target);
+
+      if (!clickedPanel && !clickedToggle) {
+        onToggleHistory();
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isHistoryOpen, onToggleHistory]);
+
   return (
     <>
       <header className="site-header px-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:px-6">
@@ -32,7 +69,7 @@ export default function Header({
             <span className="brand-name">MateGrid64</span>
           </a>
 
-          <nav className="desktop-actions" aria-label="Game actions" data-intro-controls>
+          <div className="ml-auto flex items-center gap-1">
             <button
               type="button"
               className="header-action"
@@ -41,45 +78,50 @@ export default function Header({
             >
               Undo
             </button>
-            <button type="button" className="header-action" onClick={onReset}>
-              New game
-            </button>
-            {inMatch && (
-              <button
-                type="button"
-                className="header-action"
-                onClick={onChangeOpponent}
-              >
-                Change Opponent
-              </button>
-            )}
-          </nav>
 
-          <button
-            type="button"
-            className="history-toggle"
-            data-intro-controls
-            aria-label="Toggle settings menu"
-            aria-expanded={isSettingsOpen}
-            onClick={onToggleSettings}
-          >
-            <span />
-            <span />
-            <span />
-          </button>
+            <button
+              ref={hamburgerRef}
+              type="button"
+              className="history-toggle"
+              data-intro-controls
+              aria-label="Toggle settings menu"
+              aria-expanded={isSettingsOpen}
+              onClick={onToggleSettings}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
+          </div>
 
           {isSettingsOpen && (
-            <div className="settings-menu">
-              <div className="settings-menu__mobile-only">
-                <GameControls canUndo={canUndo} onUndo={onUndo} onReset={onReset} />
-              </div>
+            <div className="settings-menu" ref={settingsRef}>
+              <button
+                type="button"
+                className="header-action settings-menu__item"
+                onClick={() => {
+                  onReset();
+                  onToggleSettings();
+                }}
+              >
+                New Game
+              </button>
               {inMatch && (
                 <button
                   type="button"
-                  className="header-action settings-menu__player mobile-menu-action"
+                  className="header-action settings-menu__item"
+                  onClick={onChangeOpponent}
+                >
+                  Change Opponent
+                </button>
+              )}
+              {inMatch && (
+                <button
+                  type="button"
+                  className="header-action settings-menu__item"
                   onClick={onEditPlayer}
                 >
-                  Player Settings
+                  Player
                 </button>
               )}
               <label className="menu-difficulty">
@@ -105,17 +147,6 @@ export default function Header({
                   <option value="dark">Dark</option>
                 </select>
               </label>
-              {inMatch && (
-                <div className="settings-menu__mobile-only">
-                  <button
-                    type="button"
-                    className="header-action settings-menu__player mobile-menu-action"
-                    onClick={onChangeOpponent}
-                  >
-                    Change Opponent
-                  </button>
-                </div>
-              )}
             </div>
           )}
         </div>
@@ -123,12 +154,13 @@ export default function Header({
 
       <div className="history-dock">
         {isHistoryOpen && (
-          <div className="history-dock__panel">
+          <div className="history-dock__panel" ref={historyPanelRef}>
             <GameStatus game={game} aiStatus={aiStatus} />
             <MoveHistory moves={game.moveHistory} />
           </div>
         )}
         <button
+          ref={historyToggleRef}
           type="button"
           className="history-dock__toggle"
           aria-expanded={isHistoryOpen}

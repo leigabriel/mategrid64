@@ -464,6 +464,11 @@ textarea {
     width: 14px;
     height: 2px;
     background: #171713;
+    transition: background-color 0.15s ease;
+}
+
+.history-toggle:hover span {
+    background: #fff;
 }
 
 .settings-menu {
@@ -478,6 +483,11 @@ textarea {
     background: #fff;
     padding: 0.75rem;
     box-shadow: 4px 4px 0 rgb(23 23 19 / 14%);
+}
+
+.settings-menu__item {
+    width: 100%;
+    text-align: left;
 }
 
 .settings-menu__player {
